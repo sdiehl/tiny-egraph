@@ -20,9 +20,7 @@ fn add_zero_collapses_to_var() {
     let mut g = EGraph::new();
     let e: RecExpr = "(+ x 0)".parse().unwrap();
     let root = g.add_expr(&e);
-    let runner = Runner::default()
-        .with_egraph(g)
-        .run(&arithmetic_rules());
+    let runner = Runner::default().with_egraph(g).run(&arithmetic_rules());
     let ext = Extractor::new(&runner.egraph, AstSize);
     let (cost, best) = ext.find_best(root);
     assert_eq!(cost, 1);
@@ -48,9 +46,7 @@ fn mul_zero_dominates() {
     let mut g = EGraph::new();
     let e: RecExpr = "(* (+ a (* b c)) 0)".parse().unwrap();
     let root = g.add_expr(&e);
-    let runner = Runner::default()
-        .with_egraph(g)
-        .run(&arithmetic_rules());
+    let runner = Runner::default().with_egraph(g).run(&arithmetic_rules());
     let ext = Extractor::new(&runner.egraph, AstSize);
     let (cost, best) = ext.find_best(root);
     assert_eq!(cost, 1);
@@ -74,9 +70,7 @@ fn greedy_agrees_with_dp_on_acyclic_case() {
     let mut g = EGraph::new();
     let e: RecExpr = "(+ x 0)".parse().unwrap();
     let root = g.add_expr(&e);
-    let runner = Runner::default()
-        .with_egraph(g)
-        .run(&arithmetic_rules());
+    let runner = Runner::default().with_egraph(g).run(&arithmetic_rules());
     let dp = Extractor::new(&runner.egraph, AstSize);
     let mut greedy = GreedyExtractor::new(&runner.egraph, AstSize);
     let (dp_cost, dp_expr) = dp.find_best(root);
@@ -115,7 +109,9 @@ fn node_limit_triggers() {
         .run(&rules);
     assert!(matches!(
         runner.stop_reason,
-        Some(StopReason::NodeLimit(_)) | Some(StopReason::Saturated) | Some(StopReason::IterLimit(_))
+        Some(StopReason::NodeLimit(_))
+            | Some(StopReason::Saturated)
+            | Some(StopReason::IterLimit(_))
     ));
 }
 

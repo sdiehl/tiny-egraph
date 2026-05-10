@@ -276,7 +276,10 @@ mod tests {
         let mut g = EGraph::new();
         let e: RecExpr = "(+ x x)".parse().unwrap();
         g.add_expr(&e);
-        let x_classes = g.classes().filter(|c| c.nodes.iter().any(|n| n.op == "x")).count();
+        let x_classes = g
+            .classes()
+            .filter(|c| c.nodes.iter().any(|n| n.op == "x"))
+            .count();
         assert_eq!(x_classes, 1);
     }
 

@@ -31,7 +31,12 @@ fn simplify(input: &str) -> String {
 
     let extractor = Extractor::new(&runner.egraph, AstSize);
     let (cost, best) = extractor.find_best(root);
-    format!("cost={} expr={} ({} iters)", cost, best, runner.iterations.len())
+    format!(
+        "cost={} expr={} ({} iters)",
+        cost,
+        best,
+        runner.iterations.len()
+    )
 }
 
 fn main() {

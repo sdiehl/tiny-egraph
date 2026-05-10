@@ -106,7 +106,14 @@ fn match_children(
         return;
     }
     let mut child_substs = Vec::new();
-    match_pattern(pat, child_pat, egraph, child_class, subst, &mut child_substs);
+    match_pattern(
+        pat,
+        child_pat,
+        egraph,
+        child_class,
+        subst,
+        &mut child_substs,
+    );
     for s in child_substs {
         match_children(pat, child_pats, enode, i + 1, egraph, &s, out);
     }
