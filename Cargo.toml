@@ -1,0 +1,38 @@
+[package]
+name = "tiny-egraph"
+version = "0.1.0"
+edition = "2021"
+description = "A minimal, pedagogical e-graph implementation. Teaches the algorithm; does not compete with egg on performance."
+license = "MIT"
+readme = "README.md"
+keywords = ["egraph", "rewriting", "saturation", "tutorial"]
+categories = ["algorithms", "data-structures"]
+
+[dependencies]
+
+[features]
+default = []
+analysis = []
+
+[[example]]
+name = "arith"
+path = "examples/arith.rs"
+
+[[example]]
+name = "boolean"
+path = "examples/boolean.rs"
+
+[[example]]
+name = "array"
+path = "examples/array.rs"
+
+[[example]]
+name = "constfold"
+path = "examples/constfold.rs"
+required-features = ["analysis"]
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
