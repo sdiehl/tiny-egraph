@@ -22,6 +22,7 @@ pub enum StopReason {
     TimeLimit(Duration),
 }
 
+#[derive(Debug)]
 pub struct Runner {
     pub egraph: EGraph,
     pub iterations: Vec<Iteration>,
@@ -45,30 +46,36 @@ impl Default for Runner {
 }
 
 impl Runner {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn with_iter_limit(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn with_iter_limit(mut self, n: usize) -> Self {
         self.iter_limit = n;
         self
     }
 
-    pub fn with_node_limit(mut self, n: usize) -> Self {
+    #[must_use]
+    pub const fn with_node_limit(mut self, n: usize) -> Self {
         self.node_limit = n;
         self
     }
 
-    pub fn with_time_limit(mut self, d: Duration) -> Self {
+    #[must_use]
+    pub const fn with_time_limit(mut self, d: Duration) -> Self {
         self.time_limit = d;
         self
     }
 
+    #[must_use]
     pub fn with_egraph(mut self, egraph: EGraph) -> Self {
         self.egraph = egraph;
         self
     }
 
+    #[must_use]
     pub fn run(mut self, rules: &[Rewrite]) -> Self {
         let start = Instant::now();
         for iter in 0..self.iter_limit {
@@ -151,7 +158,7 @@ mod tests {
             .run(&rules);
         assert!(matches!(
             runner.stop_reason,
-            Some(StopReason::Saturated) | Some(StopReason::IterLimit(_))
+            Some(StopReason::Saturated | StopReason::IterLimit(_))
         ));
     }
 }

@@ -2,15 +2,14 @@
 
 A minimal, pedagogical e-graph implementation in Rust.
 
-## Build
+Illustrates the core algorithms but does not compete with production
+implementations ( like [egg](https://egraphs-good.github.io/) ) on performance.
 
 ```bash
 cargo build
 cargo test
 cargo test --features analysis
 ```
-
-## Examples
 
 ```bash
 cargo run --example arith
@@ -21,4 +20,4 @@ cargo run --example constfold --features analysis
 
 ## License
 
-MIT.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

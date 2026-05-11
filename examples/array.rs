@@ -27,7 +27,7 @@ fn simplify(input: &str) -> String {
 
     let extractor = Extractor::new(&runner.egraph, AstSize);
     let (cost, best) = extractor.find_best(root);
-    format!("cost={} expr={}", cost, best)
+    format!("cost={cost} expr={best}")
 }
 
 fn main() {
@@ -40,7 +40,7 @@ fn main() {
         "(compose id (compose f id))",
     ];
     for c in cases {
-        println!("input  : {}", c);
+        println!("input  : {c}");
         println!("output : {}", simplify(c));
         println!();
     }

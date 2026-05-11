@@ -1,6 +1,7 @@
+use tiny_egraph::ematch::search_pattern;
 use tiny_egraph::{
     rewrite, AstSize, EGraph, Extractor, GreedyExtractor, Pattern, RecExpr, Rewrite, Runner,
-    StopReason,
+    StopReason, SymbolLang,
 };
 
 fn arithmetic_rules() -> Vec<Rewrite> {
@@ -38,7 +39,7 @@ fn associativity_then_zero() {
         .run(&arithmetic_rules());
     let ext = Extractor::new(&runner.egraph, AstSize);
     let (cost, best) = ext.find_best(root);
-    assert!(cost <= 3, "expected (+ x y) or similar, got {}", best);
+    assert!(cost <= 3, "expected (+ x y) or similar, got {best}");
 }
 
 #[test]
@@ -55,7 +56,6 @@ fn mul_zero_dominates() {
 
 #[test]
 fn search_returns_consistent_substs() {
-    use tiny_egraph::ematch::search_pattern;
     let mut g = EGraph::new();
     let e: RecExpr = "(+ x x)".parse().unwrap();
     g.add_expr(&e);
@@ -109,21 +109,20 @@ fn node_limit_triggers() {
         .run(&rules);
     assert!(matches!(
         runner.stop_reason,
-        Some(StopReason::NodeLimit(_))
-            | Some(StopReason::Saturated)
-            | Some(StopReason::IterLimit(_))
+        Some(StopReason::NodeLimit(_) | StopReason::Saturated | StopReason::IterLimit(_))
     ));
 }
 
 #[test]
+#[allow(clippy::many_single_char_names)]
 fn rebuild_after_unrelated_unions() {
     let mut g = EGraph::new();
-    let a = g.add(tiny_egraph::language::SymbolLang::leaf("a"));
-    let b = g.add(tiny_egraph::language::SymbolLang::leaf("b"));
-    let c = g.add(tiny_egraph::language::SymbolLang::leaf("c"));
-    let d = g.add(tiny_egraph::language::SymbolLang::leaf("d"));
-    let fab = g.add(tiny_egraph::language::SymbolLang::new("f", vec![a, b]));
-    let fcd = g.add(tiny_egraph::language::SymbolLang::new("f", vec![c, d]));
+    let a = g.add(SymbolLang::leaf("a"));
+    let b = g.add(SymbolLang::leaf("b"));
+    let c = g.add(SymbolLang::leaf("c"));
+    let d = g.add(SymbolLang::leaf("d"));
+    let fab = g.add(SymbolLang::new("f", vec![a, b]));
+    let fcd = g.add(SymbolLang::new("f", vec![c, d]));
     g.union(a, c);
     g.union(b, d);
     g.rebuild();

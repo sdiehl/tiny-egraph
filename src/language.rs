@@ -1,6 +1,7 @@
 //! E-node and `RecExpr` types plus an s-expression parser.
 
 use std::fmt;
+use std::mem;
 use std::str::FromStr;
 
 use crate::Id;
@@ -23,6 +24,7 @@ impl SymbolLang {
         Self::new(op, Vec::new())
     }
 
+    #[must_use]
     pub fn matches(&self, other: &Self) -> bool {
         self.op == other.op && self.children.len() == other.children.len()
     }
@@ -35,7 +37,7 @@ impl fmt::Display for SymbolLang {
         } else {
             write!(f, "({}", self.op)?;
             for c in &self.children {
-                write!(f, " {}", c)?;
+                write!(f, " {c}")?;
             }
             write!(f, ")")
         }
@@ -48,6 +50,7 @@ pub struct RecExpr {
 }
 
 impl RecExpr {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -58,22 +61,29 @@ impl RecExpr {
         id
     }
 
-    pub fn len(&self) -> usize {
+    #[must_use]
+    pub const fn len(&self) -> usize {
         self.nodes.len()
     }
 
-    pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
 
+    #[must_use]
     pub fn nodes(&self) -> &[SymbolLang] {
         &self.nodes
     }
 
+    #[must_use]
     pub fn get(&self, id: Id) -> &SymbolLang {
         &self.nodes[id.index()]
     }
 
+    /// # Panics
+    /// Panics if the expression has no nodes.
+    #[must_use]
     pub fn root(&self) -> Id {
         assert!(!self.nodes.is_empty(), "RecExpr is empty");
         Id::from(self.nodes.len() - 1)
@@ -82,9 +92,6 @@ impl RecExpr {
 
 impl fmt::Display for RecExpr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.nodes.is_empty() {
-            return Ok(());
-        }
         fn go(rec: &RecExpr, id: Id, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             let node = rec.get(id);
             if node.children.is_empty() {
@@ -97,6 +104,9 @@ impl fmt::Display for RecExpr {
                 }
                 write!(f, ")")
             }
+        }
+        if self.nodes.is_empty() {
+            return Ok(());
         }
         go(self, self.root(), f)
     }
@@ -113,10 +123,10 @@ pub enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ParseError::UnexpectedEof => write!(f, "unexpected end of input"),
-            ParseError::UnexpectedClose => write!(f, "unexpected ')'"),
-            ParseError::EmptyList => write!(f, "empty list '()' has no operator"),
-            ParseError::Trailing(s) => write!(f, "trailing input: {:?}", s),
+            Self::UnexpectedEof => write!(f, "unexpected end of input"),
+            Self::UnexpectedClose => write!(f, "unexpected ')'"),
+            Self::EmptyList => write!(f, "empty list '()' has no operator"),
+            Self::Trailing(s) => write!(f, "trailing input: {s:?}"),
         }
     }
 }
@@ -128,7 +138,7 @@ impl FromStr for RecExpr {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let tokens = tokenize(s);
-        let mut rec = RecExpr::new();
+        let mut rec = Self::new();
         let mut idx = 0;
         parse_into(&tokens, &mut idx, &mut rec)?;
         if idx != tokens.len() {
@@ -145,13 +155,13 @@ pub(crate) fn tokenize(s: &str) -> Vec<String> {
         match c {
             '(' | ')' => {
                 if !cur.is_empty() {
-                    out.push(std::mem::take(&mut cur));
+                    out.push(mem::take(&mut cur));
                 }
                 out.push(c.to_string());
             }
             c if c.is_whitespace() => {
                 if !cur.is_empty() {
-                    out.push(std::mem::take(&mut cur));
+                    out.push(mem::take(&mut cur));
                 }
             }
             c => cur.push(c),

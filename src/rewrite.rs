@@ -14,6 +14,8 @@ pub struct Rewrite {
 }
 
 impl Rewrite {
+    /// # Errors
+    /// Returns an error if the applier references a variable that the searcher does not bind.
     pub fn new(
         name: impl Into<String>,
         searcher: Pattern,
@@ -22,10 +24,7 @@ impl Rewrite {
         let searcher_vars: HashSet<_> = searcher.vars().into_iter().collect();
         for v in applier.vars() {
             if !searcher_vars.contains(&v) {
-                return Err(format!(
-                    "applier variable {} is not bound by the searcher",
-                    v
-                ));
+                return Err(format!("applier variable {v} is not bound by the searcher"));
             }
         }
         Ok(Self {
@@ -35,6 +34,7 @@ impl Rewrite {
         })
     }
 
+    #[must_use]
     pub fn search(&self, egraph: &EGraph) -> Vec<SearchMatches> {
         search_pattern(egraph, &self.searcher)
     }
@@ -65,7 +65,7 @@ macro_rules! rewrite {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Runner;
+    use crate::{RecExpr, Runner, SymbolLang};
 
     #[test]
     fn applier_var_must_be_bound() {
@@ -75,23 +75,24 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::many_single_char_names)]
     fn one_step_apply() {
         let mut g = EGraph::new();
-        let e: crate::RecExpr = "(+ x 0)".parse().unwrap();
+        let e: RecExpr = "(+ x 0)".parse().unwrap();
         let root = g.add_expr(&e);
         let r = rewrite!("zero"; "(+ ?a 0)" => "?a");
         let matches = r.search(&g);
         let n = r.apply(&mut g, &matches);
         g.rebuild();
         assert!(n >= 1);
-        let x = g.add(crate::language::SymbolLang::leaf("x"));
+        let x = g.add(SymbolLang::leaf("x"));
         assert_eq!(g.find(root), g.find(x));
     }
 
     #[test]
     fn saturate_associativity() {
         let mut g = EGraph::new();
-        let e: crate::RecExpr = "(+ a (+ b c))".parse().unwrap();
+        let e: RecExpr = "(+ a (+ b c))".parse().unwrap();
         let root = g.add_expr(&e);
         let rules = vec![
             rewrite!("assoc-l"; "(+ ?a (+ ?b ?c))" => "(+ (+ ?a ?b) ?c)"),
@@ -101,7 +102,7 @@ mod tests {
             .with_iter_limit(10)
             .with_egraph(g)
             .run(&rules);
-        let other: crate::RecExpr = "(+ (+ a b) c)".parse().unwrap();
+        let other: RecExpr = "(+ (+ a b) c)".parse().unwrap();
         let mut g = runner.egraph;
         let id = g.add_expr(&other);
         g.rebuild();

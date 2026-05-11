@@ -1,6 +1,7 @@
 //! Extract a single concrete term from an e-class.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::fmt;
 
 use crate::language::{RecExpr, SymbolLang};
 use crate::{EGraph, Id};
@@ -10,6 +11,7 @@ pub trait CostFunction {
     fn cost(&mut self, op: &str, children: &[Self::Cost]) -> Self::Cost;
 }
 
+#[derive(Debug)]
 pub struct AstSize;
 
 impl CostFunction for AstSize {
@@ -19,6 +21,7 @@ impl CostFunction for AstSize {
     }
 }
 
+#[derive(Debug)]
 pub struct AstDepth;
 
 impl CostFunction for AstDepth {
@@ -36,6 +39,14 @@ pub struct Extractor<'a, CF: CostFunction> {
     cost_fn: CF,
 }
 
+impl<CF: CostFunction> fmt::Debug for Extractor<'_, CF> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Extractor")
+            .field("classes", &self.costs.len())
+            .finish_non_exhaustive()
+    }
+}
+
 impl<'a, CF: CostFunction<Cost = usize>> Extractor<'a, CF> {
     pub fn new(egraph: &'a EGraph, cost_fn: CF) -> Self {
         let mut ex = Self {
@@ -47,6 +58,8 @@ impl<'a, CF: CostFunction<Cost = usize>> Extractor<'a, CF> {
         ex
     }
 
+    /// # Panics
+    /// Panics if `id` refers to an e-class with no extracted node (e.g. the graph was not rebuilt).
     pub fn find_best(&self, id: Id) -> (usize, RecExpr) {
         let canon = self.egraph.find(id);
         let &(cost, _) = self
@@ -110,7 +123,10 @@ impl<'a, CF: CostFunction<Cost = usize>> Extractor<'a, CF> {
                     }
                 }
                 if let Some((c, node)) = best {
-                    let entry = self.costs.entry(canon).or_insert((UNREACHED, node.clone()));
+                    let entry = self
+                        .costs
+                        .entry(canon)
+                        .or_insert_with(|| (UNREACHED, node.clone()));
                     if c < entry.0 {
                         *entry = (c, node.clone());
                         changed = true;
@@ -126,26 +142,27 @@ pub struct GreedyExtractor<'a, CF: CostFunction> {
     cost_fn: CF,
 }
 
+impl<CF: CostFunction> fmt::Debug for GreedyExtractor<'_, CF> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("GreedyExtractor").finish_non_exhaustive()
+    }
+}
+
 impl<'a, CF: CostFunction<Cost = usize>> GreedyExtractor<'a, CF> {
-    pub fn new(egraph: &'a EGraph, cost_fn: CF) -> Self {
+    pub const fn new(egraph: &'a EGraph, cost_fn: CF) -> Self {
         Self { egraph, cost_fn }
     }
 
     pub fn find_best(&mut self, id: Id) -> (usize, RecExpr) {
         let mut rec = RecExpr::new();
-        let mut visiting = std::collections::HashSet::new();
+        let mut visiting = HashSet::new();
         let (cost, _) = self.go(self.egraph.find(id), &mut rec, &mut visiting);
         (cost, rec)
     }
 
-    fn go(
-        &mut self,
-        class: Id,
-        rec: &mut RecExpr,
-        visiting: &mut std::collections::HashSet<Id>,
-    ) -> (usize, Id) {
+    fn go(&mut self, class: Id, rec: &mut RecExpr, visiting: &mut HashSet<Id>) -> (usize, Id) {
         if !visiting.insert(class) {
-            let id = rec.add(SymbolLang::leaf(format!("<cycle:{}>", class)));
+            let id = rec.add(SymbolLang::leaf(format!("<cycle:{class}>")));
             return (UNREACHED, id);
         }
         let class_data = self.egraph.get_class(class).expect("missing class");

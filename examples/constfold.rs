@@ -1,8 +1,7 @@
 //! Constant folding via the Analysis API.
 
 use tiny_egraph::analysis::{Analysis, ConstFold};
-use tiny_egraph::language::SymbolLang;
-use tiny_egraph::{AstSize, EGraph, Extractor, RecExpr};
+use tiny_egraph::{AstSize, EGraph, Extractor, RecExpr, SymbolLang};
 
 fn fold(input: &str) -> String {
     let expr: RecExpr = input.parse().unwrap();
@@ -32,7 +31,7 @@ fn main() {
         "(neg (+ 1 2))",
     ];
     for c in cases {
-        println!("input  : {}", c);
+        println!("input  : {c}");
         println!("folded : {}", fold(c));
         println!();
     }

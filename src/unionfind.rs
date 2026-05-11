@@ -11,15 +11,18 @@ pub struct UnionFind {
 }
 
 impl UnionFind {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn len(&self) -> usize {
+    #[must_use]
+    pub const fn len(&self) -> usize {
         self.parents.len()
     }
 
-    pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
         self.parents.is_empty()
     }
 
@@ -30,6 +33,7 @@ impl UnionFind {
         id
     }
 
+    #[must_use]
     pub fn find(&self, mut id: Id) -> Id {
         while self.parents[id.index()] != id {
             id = self.parents[id.index()];
@@ -66,6 +70,7 @@ impl UnionFind {
         root
     }
 
+    #[must_use]
     pub fn equiv(&self, a: Id, b: Id) -> bool {
         self.find(a) == self.find(b)
     }

@@ -1,7 +1,8 @@
 //! E-graph: hashcons + union-find + congruence closure via deferred rebuild.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::mem;
 
 use crate::language::SymbolLang;
 use crate::{Id, RecExpr, UnionFind};
@@ -22,11 +23,13 @@ impl EClass {
         }
     }
 
-    pub fn len(&self) -> usize {
+    #[must_use]
+    pub const fn len(&self) -> usize {
         self.nodes.len()
     }
 
-    pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
         self.nodes.is_empty()
     }
 }
@@ -45,15 +48,17 @@ impl fmt::Debug for EGraph {
             .field("classes", &self.classes.len())
             .field("memo_size", &self.memo.len())
             .field("pending", &self.pending.len())
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
 impl EGraph {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn number_of_classes(&self) -> usize {
         self.classes.len()
     }
@@ -62,10 +67,12 @@ impl EGraph {
         self.classes.values().map(EClass::len).sum()
     }
 
-    pub fn is_clean(&self) -> bool {
+    #[must_use]
+    pub const fn is_clean(&self) -> bool {
         self.pending.is_empty()
     }
 
+    #[must_use]
     pub fn find(&self, id: Id) -> Id {
         self.union_find.find(id)
     }
@@ -78,10 +85,12 @@ impl EGraph {
         self.classes.values()
     }
 
+    #[must_use]
     pub fn get_class(&self, id: Id) -> Option<&EClass> {
         self.classes.get(&self.find(id))
     }
 
+    #[must_use]
     pub fn lookup(&self, node: &SymbolLang) -> Option<Id> {
         self.memo.get(node).map(|&id| self.find(id))
     }
@@ -110,6 +119,8 @@ impl EGraph {
         id
     }
 
+    /// # Panics
+    /// Panics if `expr` has no nodes.
     pub fn add_expr(&mut self, expr: &RecExpr) -> Id {
         let mut ids: Vec<Id> = Vec::with_capacity(expr.len());
         for node in expr.nodes() {
@@ -122,6 +133,8 @@ impl EGraph {
         *ids.last().expect("RecExpr must be non-empty")
     }
 
+    /// # Panics
+    /// Panics if internal class bookkeeping is missing for either id (an invariant violation).
     pub fn union(&mut self, a: Id, b: Id) -> bool {
         let a = self.find_mut(a);
         let b = self.find_mut(b);
@@ -147,13 +160,13 @@ impl EGraph {
     pub fn rebuild(&mut self) -> usize {
         let mut merged = 0;
         while !self.pending.is_empty() {
-            let todo = std::mem::take(&mut self.pending);
-            let mut seen = HashMap::with_capacity(todo.len());
+            let todo = mem::take(&mut self.pending);
+            let mut seen: HashSet<Id> = HashSet::with_capacity(todo.len());
             for id in todo {
                 let c = self.find_mut(id);
-                seen.entry(c).or_insert(());
+                seen.insert(c);
             }
-            for &id in seen.keys() {
+            for &id in &seen {
                 merged += self.repair(id);
             }
         }
@@ -163,7 +176,7 @@ impl EGraph {
     fn repair(&mut self, id: Id) -> usize {
         let id = self.find_mut(id);
         let parents = match self.classes.get_mut(&id) {
-            Some(c) => std::mem::take(&mut c.parents),
+            Some(c) => mem::take(&mut c.parents),
             None => return 0,
         };
 
@@ -199,6 +212,7 @@ impl EGraph {
         merged
     }
 
+    #[must_use]
     pub fn equiv(&self, a: Id, b: Id) -> bool {
         self.find(a) == self.find(b)
     }

@@ -22,12 +22,11 @@ pub trait Analysis {
                     let mut all_known = true;
                     for &c in &node.children {
                         let c = egraph.find(c);
-                        match data.get(&c) {
-                            Some(d) => child_data.push(d),
-                            None => {
-                                all_known = false;
-                                break;
-                            }
+                        if let Some(d) = data.get(&c) {
+                            child_data.push(d);
+                        } else {
+                            all_known = false;
+                            break;
                         }
                     }
                     if !all_known {
@@ -35,18 +34,15 @@ pub trait Analysis {
                     }
                     let new = self.make(node, &child_data);
                     let id = class.id;
-                    match data.get(&id) {
-                        Some(existing) => {
-                            let merged = self.merge(existing.clone(), new);
-                            if merged != *existing {
-                                data.insert(id, merged);
-                                changed = true;
-                            }
-                        }
-                        None => {
-                            data.insert(id, new);
+                    if let Some(existing) = data.get(&id) {
+                        let merged = self.merge(existing.clone(), new);
+                        if merged != *existing {
+                            data.insert(id, merged);
                             changed = true;
                         }
+                    } else {
+                        data.insert(id, new);
+                        changed = true;
                     }
                 }
             }
@@ -55,6 +51,7 @@ pub trait Analysis {
     }
 }
 
+#[derive(Debug)]
 pub struct ConstFold;
 
 impl Analysis for ConstFold {
@@ -77,10 +74,8 @@ impl Analysis for ConstFold {
 
     fn merge(&self, a: Self::Data, b: Self::Data) -> Self::Data {
         match (a, b) {
-            (Some(x), Some(y)) if x == y => Some(x),
-            (Some(x), None) | (None, Some(x)) => Some(x),
+            (Some(x), None | Some(_)) | (None, Some(x)) => Some(x),
             (None, None) => None,
-            (Some(x), Some(_)) => Some(x),
         }
     }
 }

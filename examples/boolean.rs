@@ -57,7 +57,7 @@ fn main() {
         "(or (and x y) (and x (not y)))",
     ];
     for c in cases {
-        println!("input  : {}", c);
+        println!("input  : {c}");
         println!("output : {}", simplify(c));
         println!();
     }

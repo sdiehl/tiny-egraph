@@ -7,16 +7,19 @@ pub struct Id(u32);
 
 impl Id {
     #[inline]
+    #[must_use]
     pub const fn from_u32(n: u32) -> Self {
-        Id(n)
+        Self(n)
     }
 
     #[inline]
+    #[must_use]
     pub const fn index(self) -> usize {
         self.0 as usize
     }
 
     #[inline]
+    #[must_use]
     pub const fn raw(self) -> u32 {
         self.0
     }
@@ -36,19 +39,19 @@ impl fmt::Display for Id {
 
 impl From<usize> for Id {
     fn from(n: usize) -> Self {
-        Id(n as u32)
+        Self(u32::try_from(n).expect("Id index overflows u32"))
     }
 }
 
 impl From<u32> for Id {
     fn from(n: u32) -> Self {
-        Id(n)
+        Self(n)
     }
 }
 
 impl From<Id> for usize {
     fn from(id: Id) -> Self {
-        id.0 as usize
+        id.0 as Self
     }
 }
 

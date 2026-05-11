@@ -11,6 +11,7 @@ pub struct SearchMatches {
     pub substs: Vec<Subst>,
 }
 
+#[must_use]
 pub fn search_pattern(egraph: &EGraph, pat: &Pattern) -> Vec<SearchMatches> {
     let mut out = Vec::new();
     for class in egraph.classes() {
@@ -25,6 +26,7 @@ pub fn search_pattern(egraph: &EGraph, pat: &Pattern) -> Vec<SearchMatches> {
     out
 }
 
+#[must_use]
 pub fn search_eclass(egraph: &EGraph, pat: &Pattern, eclass: Id) -> Vec<Subst> {
     let root = pat.root();
     let mut out = Vec::new();
@@ -48,22 +50,20 @@ fn match_pattern(
 ) {
     let canon = egraph.find(eclass);
     match pat.get(node_id) {
-        PatternNode::Var(v) => match subst.get(v) {
-            Some(bound) => {
+        PatternNode::Var(v) => {
+            if let Some(bound) = subst.get(v) {
                 if egraph.find(bound) == canon {
                     out.push(subst.clone());
                 }
-            }
-            None => {
+            } else {
                 let mut s = subst.clone();
                 s.insert(v.clone(), canon);
                 out.push(s);
             }
-        },
+        }
         PatternNode::Op { op, children } => {
-            let class = match egraph.get_class(canon) {
-                Some(c) => c,
-                None => return,
+            let Some(class) = egraph.get_class(canon) else {
+                return;
             };
             for enode in &class.nodes {
                 if enode.op != *op || enode.children.len() != children.len() {
@@ -133,8 +133,7 @@ pub(crate) fn flatten_matches(matches: Vec<SearchMatches>) -> Vec<(Id, Subst)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::language::SymbolLang;
-    use crate::pattern::Var;
+    use crate::{SymbolLang, Var};
 
     fn leaf(op: &str) -> SymbolLang {
         SymbolLang::leaf(op)
