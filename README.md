@@ -1,6 +1,7 @@
 # tiny-egraph
 
-A minimal, pedagogical e-graph implementation in Rust. About 1800 lines of code.
+A minimal, pedagogical e-graph implementation in Rust. About 1800 lines of code,
+no dependencies.
 
 Illustrates the core algorithms but does not compete with production
 implementations ( like [egg](https://egraphs-good.github.io/) ) on performance.
