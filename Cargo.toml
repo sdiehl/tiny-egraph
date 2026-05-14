@@ -1,13 +1,13 @@
 [package]
 name = "tiny-egraph"
 version = "0.1.0"
+categories = ["algorithms", "data-structures"]
 edition = "2021"
-description = "A minimal e-graph implementation"
+keywords = ["egraph", "rewriting", "saturation", "tutorial"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/sdiehl/tiny-egraph"
-keywords = ["egraph", "rewriting", "saturation", "tutorial"]
-categories = ["algorithms", "data-structures"]
+description = "A minimal e-graph implementation"
 
 [dependencies]
 
